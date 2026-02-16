@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>F1 Hub — Formula 1 News & Teams 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #0a0a0a;
+    --bg-card: #141414;
+    --bg-card2: #1a1a1a;
+    --text: #f0f0f0;
+    --text-dim: #888;
+    --accent: #e10600;
+    --sidebar-width: 80px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  .bg-animation {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bg-animation::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(225,6,0,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 50%, rgba(0,100,255,0.05) 0%, transparent 50%);
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes bgPulse {
+    0% { transform: translate(0,0) scale(1); }
+    100% { transform: translate(-2%,1%) scale(1.05); }
+  }
+
+  .racing-line {
+    position: fixed;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.12;
+    z-index: 0;
+    animation: raceLine 3s linear infinite;
+    pointer-events: none;
+  }
+  .racing-line:nth-child(1) { top: 20%; width: 100%; animation-duration: 2.5s; }
+  .racing-line:nth-child(2) { top: 50%; width: 80%; animation-duration: 3.5s; animation-delay: 0.5s; }
+  .racing-line:nth-child(3) { top: 80%; width: 60%; animation-duration: 4s; animation-delay: 1s; }
+  @keyframes raceLine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+
+  /* ===== LAYOUT ===== */
+  .app-layout {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .team-sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    z-index: 100;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .team-sidebar::-webkit-scrollbar { display: none; }
+
+  .sidebar-logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 2px;
+    padding: 8px 0 12px;
+    border-bottom: 1px solid #222;
+    margin-bottom: 8px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .team-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.1;
+    padding: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 2px solid transparent;
+    flex-shrink: 0;
+  }
+  .team-icon:hover {
+    transform: scale(1.1);
+    background: rgba(255,255,255,0.08);
+  }
+  .team-icon.active {
+    border-color: var(--team-color);
+    background: rgba(255,255,255,0.1);
+    box-shadow: 0 0 20px rgba(var(--team-rgb), 0.3);
+  }
+  .team-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) scale(0.8);
+    background: #222;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s;
+    z-index: 200;
+  }
+  .team-icon:hover::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content {
+    flex: 1;
+    padding: 20px 30px 20px calc(var(--sidebar-width) + 30px);
+    max-width: calc(1200px + var(--sidebar-width));
+    margin: 0 auto;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 50px 20px 30px;
+  }
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #fff 0%, #e10600 50%, #fff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+  .season {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 5px 18px;
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    color: var(--accent);
+    animation: pulse-border 2s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 0 0 rgba(225,6,0,0); }
+    50% { box-shadow: 0 0 12px 2px rgba(225,6,0,0.3); }
+  }
+
+  /* ===== TEAM OVERLAY ===== */
+  .team-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .team-overlay.open {
+    display: flex;
+    opacity: 1;
+  }
+
+  .team-panel {
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    background: var(--bg-dark);
+    border: 1px solid #333;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(30px) scale(0.95);
+    transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .team-overlay.open .team-panel {
+    transform: translateY(0) scale(1);
+  }
+
+  .panel-header {
+    padding: 24px 28px 0;
+    position: relative;
+    overflow: visible;
+    flex-shrink: 0;
+  }
+  .panel-header-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.15;
+    background: linear-gradient(135deg, var(--team-accent), transparent 70%);
+  }
+  .panel-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 2;
+  }
+  .panel-close:hover { background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+
+  .panel-team-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    position: relative;
+    z-index: 1;
+  }
+  .panel-team-full {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    position: relative;
+    z-index: 1;
+    margin-top: 2px;
+  }
+
+  /* Tabs */
+  .panel-tabs {
+    display: flex;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+    margin-top: 16px;
+  }
+  .panel-tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+  }
+  .panel-tab:hover { color: var(--text); }
+  .panel-tab.active {
+    color: var(--team-accent);
+    border-bottom-color: var(--team-accent);
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+  }
+
+  .tab-content {
+    display: none;
+    animation: fadeSlideIn 0.4s ease;
+  }
+  .tab-content.active { display: block; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Panel content styles */
+  .info-block {
+    margin-bottom: 20px;
+  }
+  .info-block h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .info-block p, .info-block li {
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #ccc;
+  }
+  .info-block ul {
+    list-style: none;
+    padding: 0;
+  }
+  .info-block li {
+    padding: 4px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .info-block li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--team-accent);
+    font-weight: 700;
+  }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .mini-stat {
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .mini-stat .val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+  }
+  .mini-stat .lbl {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .driver-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .driver-mini {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+  }
+  .driver-mini .num {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    opacity: 0.25;
+  }
+  .driver-mini .dname {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 2px;
+  }
+  .driver-mini .dcountry {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  .highlight-box {
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .highlight-box h4 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  /* ===== NEWS/TESTING SECTION ===== */
+  .section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .badge {
+    background: var(--accent);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: #fff;
+  }
+  .section-sub {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+  }
+
+  .test-card {
+    background: var(--bg-card);
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .test-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0;
+    width: 4px;
+    height: 100%;
+  }
+  .test-card h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+  }
+
+  .flex-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .flex-stats .stat-box {
+    flex: 1;
+    min-width: 100px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+  .flex-stats .stat-box .value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .flex-stats .stat-box .label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .fastest-lap {
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .fastest-lap .fl-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .fastest-lap .fl-driver {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .fastest-lap .fl-detail {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+
+  .key-fact {
+    font-size: 0.83rem;
+    color: var(--text-dim);
+    line-height: 1.8;
+    padding: 2px 0;
+  }
+  .key-fact strong { color: var(--text); }
+
+  .story-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .story-card {
+    border-radius: 14px;
+    padding: 18px;
+    border: 1px solid;
+  }
+  .story-card h4 {
+    font-weight: 700;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+  }
+  .story-card p {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .ranking-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+  }
+  .ranking-table th {
+    padding: 10px 8px;
+    text-align: left;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    color: var(--accent);
+    border-bottom: 2px solid #333;
+  }
+  .ranking-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #1a1a1a;
+  }
+
+  .next-test-banner {
+    background: linear-gradient(135deg, rgba(225,6,0,0.1), rgba(0,100,255,0.05));
+    border: 1px solid #333;
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .teams-section-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin: 32px 0 16px;
+    padding-top: 24px;
+    border-top: 1px solid #222;
+  }
+
+  .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .team-card {
+    background: var(--bg-card);
+    border: 1px solid #222;
+    border-radius: 14px;
+    padding: 20px 20px 20px 28px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .team-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    border-radius: 14px 0 0 14px;
+    transition: width 0.3s;
+  }
+  .team-card:hover {
+    transform: translateY(-3px);
+    border-color: #333;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+  }
+  .team-card:hover::before { width: 6px; }
+  .team-card .tc-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .team-card .tc-full {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .team-card .tc-drivers {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .team-card .driver-tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .team-card .tc-num {
+    position: absolute;
+    top: 10px; right: 14px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    opacity: 0.06;
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 768px) {
+    .team-sidebar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      width: 100%;
+      height: 64px;
+      flex-direction: row;
+      padding: 0 8px;
+      border-right: none;
+      border-bottom: 1px solid #1a1a1a;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .sidebar-logo {
+      display: none;
+    }
+    .team-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      font-size: 0.45rem;
+      flex-shrink: 0;
+    }
+    .team-icon::after { display: none; }
+    .main-content {
+      margin-left: 0;
+      margin-top: 64px;
+      padding: 16px;
+      padding-left: 16px;
+    }
+    .logo { font-size: 2rem; }
+    .teams-grid { grid-template-columns: 1fr; }
+    .driver-row { grid-template-columns: 1fr; }
+    .story-grid { grid-template-columns: 1fr; }
+    .team-panel {
+      width: 96%;
+      max-height: 90vh;
+      border-radius: 16px;
+    }
+    .panel-team-name { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-animation"></div>
+<div class="racing-line"></div>
+<div class="racing-line"></div>
+<div class="racing-line"></div>
+
+<!-- Team Sidebar -->
+<nav class="team-sidebar" id="teamSidebar">
+  <div class="sidebar-logo">F1<br>HUB</div>
+</nav>
+
+<!-- Team Overlay -->
+<div class="team-overlay" id="teamOverlay" onclick="if(event.target===this)closePanel()">
+  <div class="team-panel" id="teamPanel"></div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+  <header>
+    <div class="logo">F1 HUB</div>
+    <div class="subtitle">Formula 1 News & Teams</div>
+    <div class="season">2026 Season</div>
+  </header>
+
+  <!-- Pre-Season Testing -->
+  <div id="newsSection">
+    <div class="section-title">
+      <span class="badge">NEW</span>
+      🏁 Pre-Season Testing 2026
+    </div>
+    <div class="section-sub">Barcelona Shakedown & Bahrain Test 1 — Die neue Ära beginnt!</div>
+
+    <!-- Bahrain -->
+    <div class="test-card" style="border-left: 4px solid #00D2BE;">
+      <h3>🇧🇭 Bahrain Test 1</h3>
+      <div class="flex-stats">
+        <div class="stat-box"><div class="value" style="color:#00D2BE">11.-13. Feb</div><div class="label">2026</div></div>
+        <div class="stat-box"><div class="value" style="color:#00D2BE">5.412 km</div><div class="label">Sakhir Circuit</div></div>
+        <div class="stat-box"><div class="value" style="color:#00D2BE">23-27°C</div><div class="label">Sonnig & Heiß</div></div>
+        <div class="stat-box"><div class="value" style="color:#00D2BE">3 Tage</div><div class="label">11 Teams</div></div>
+      </div>
+
+      <div class="fastest-lap" style="background:linear-gradient(135deg,rgba(0,210,190,0.15),rgba(0,210,190,0.03));border:1px solid rgba(0,210,190,0.3);">
+        <div class="fl-label" style="color:#00D2BE">⚡ SCHNELLSTE RUNDE DES TESTS</div>
+        <div class="fl-driver">Kimi Antonelli</div>
+        <div class="fl-detail">Mercedes W17 — <span style="color:#27F4D2;font-weight:700;font-family:'Orbitron',sans-serif;">1:33.669</span> (Tag 3)</div>
+      </div>
+
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.75rem;color:var(--text-dim);letter-spacing:2px;margin-bottom:12px;">📊 TEAM-RANGLISTE NACH RUNDEN</div>
+      <div style="overflow-x:auto;">
+        <table class="ranking-table">
+          <thead><tr><th>#</th><th>TEAM</th><th>RUNDEN</th><th>KM</th><th>HIGHLIGHT</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">1</td><td><span style="color:#1868DB;font-weight:700">Williams</span></td><td style="font-weight:700">422</td><td style="color:var(--text-dim)">2.284</td><td style="font-size:0.78rem;color:var(--text-dim)">Sainz & Albon holten verlorene Zeit auf 💪</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">1</td><td><span style="color:#FF8000;font-weight:700">McLaren</span></td><td style="font-weight:700">422</td><td style="color:var(--text-dim)">2.284</td><td style="font-size:0.78rem;color:var(--text-dim)">Piastri fuhr 150+ Runden an Tag 3 🔥</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">3</td><td><span style="color:#E8002D;font-weight:700">Ferrari</span></td><td style="font-weight:700">420</td><td style="color:var(--text-dim)">2.273</td><td style="font-size:0.78rem;color:var(--text-dim)">Hamilton fuhr 150 Runden an Tag 3</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">4</td><td><span style="color:#3671C6;font-weight:700">Red Bull</span></td><td style="font-weight:700">~335</td><td style="color:var(--text-dim)">~1.813</td><td style="font-size:0.78rem;color:var(--text-dim)">Red Bull Ford PU beeindruckt ⚡</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">4</td><td><span style="color:#6692FF;font-weight:700">Racing Bulls</span></td><td style="font-weight:700">~335</td><td style="color:var(--text-dim)">~1.813</td><td style="font-size:0.78rem;color:var(--text-dim)">670 Runden mit Red Bull — zuverlässig!</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">6</td><td><span style="color:#C0A44D;font-weight:700">Cadillac</span></td><td style="font-weight:700">~314</td><td style="color:var(--text-dim)">1.700+</td><td style="font-size:0.78rem;color:var(--text-dim)">Debut! Perez & Bottas Rennsimulationen 🇺🇸</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">7</td><td><span style="color:#27F4D2;font-weight:700">Mercedes</span></td><td style="font-weight:700">~300</td><td style="color:var(--text-dim)">~1.624</td><td style="font-size:0.78rem;color:var(--text-dim)">Antonelli schnellste Runde!</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">8</td><td><span style="color:#52E252;font-weight:700">Audi</span></td><td style="font-weight:700">~310</td><td style="color:var(--text-dim)">~1.678</td><td style="font-size:0.78rem;color:var(--text-dim)">Neues Bodywork, Wheatley "stolz"</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">9</td><td><span style="color:#FF87BC;font-weight:700">Alpine</span></td><td style="font-weight:700">~290</td><td style="color:var(--text-dim)">~1.569</td><td style="font-size:0.78rem;color:var(--text-dim)">Erster Test mit Mercedes-Motor</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700">10</td><td><span style="color:#B6BABD;font-weight:700">Haas</span></td><td style="font-weight:700">~280</td><td style="color:var(--text-dim)">~1.515</td><td style="font-size:0.78rem;color:var(--text-dim)">Solide mit Toyota-Partnerschaft</td></tr>
+            <tr><td style="font-family:'Orbitron',sans-serif;font-weight:700;color:#ff4444">11</td><td><span style="color:#229971;font-weight:700">Aston Martin</span></td><td style="font-weight:700;color:#ff4444">206</td><td style="color:var(--text-dim)">1.115</td><td style="font-size:0.78rem;color:#ff4444">⚠️ Wenigste Runden!</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.75rem;color:var(--text-dim);letter-spacing:2px;margin:20px 0 12px;">🔥 KEY STORIES</div>
+      <div class="story-grid">
+        <div class="story-card" style="background:rgba(54,113,198,0.1);border-color:rgba(54,113,198,0.3);">
+          <h4 style="color:#3671C6">🏆 Red Bull Ford beeindruckt</h4>
+          <p>Der brandneue Red Bull Ford Antrieb ist DAS Gesprächsthema! 1 Sekunde schneller auf den Geraden. Russell: "Ziemlich beängstigend."</p>
+        </div>
+        <div class="story-card" style="background:rgba(39,244,210,0.1);border-color:rgba(39,244,210,0.3);">
+          <h4 style="color:#27F4D2">⚡ Antonelli's Comeback</h4>
+          <p>Nur 33 Runden in 2 Tagen — dann SCHNELLSTE RUNDE des Tests an Tag 3! 1:33.669. Mental stark! 💪</p>
+        </div>
+        <div class="story-card" style="background:rgba(34,153,113,0.1);border-color:rgba(34,153,113,0.3);">
+          <h4 style="color:#229971">😰 Aston Martin in Trouble</h4>
+          <p>Neweys erstes Auto kämpft. Nur 206 Runden, wenigste aller Teams. Stroll: "4,5 Sekunden hinten"</p>
+        </div>
+        <div class="story-card" style="background:rgba(192,164,77,0.1);border-color:rgba(192,164,77,0.3);">
+          <h4 style="color:#C0A44D">🇺🇸 Cadillac überzeugt!</h4>
+          <p>Das neue 11. Team läuft zuverlässig! Über 1.700 km, Rennsimulationen für Perez & Bottas.</p>
+        </div>
+        <div class="story-card" style="background:rgba(24,104,219,0.1);border-color:rgba(24,104,219,0.3);">
+          <h4 style="color:#1868DB">💪 Williams holt auf</h4>
+          <p>Nach verpasstem Barcelona: MEISTE Runden! 422 Runden für Sainz & Albon. Mega Comeback.</p>
+        </div>
+        <div class="story-card" style="background:rgba(232,0,45,0.1);border-color:rgba(232,0,45,0.3);">
+          <h4 style="color:#E8002D">🔒 Ferrari versteckt sich</h4>
+          <p>Vasseur redet nur über Datensammlung. Leclerc sieht Red Bull & Mercedes vorne. Großes Upgrade kommt!</p>
+        </div>
+      </div>
+
+    <!-- Barcelona -->
+    <div class="test-card" style="border-left: 4px solid var(--accent);">
+      <h3>🇪🇸 Barcelona Shakedown</h3>
+      <div class="flex-stats">
+        <div class="stat-box"><div class="value" style="color:var(--accent)">26.-30. Jan</div><div class="label">2026</div></div>
+        <div class="stat-box"><div class="value" style="color:var(--accent)">4.675 km</div><div class="label">Circuit de Catalunya</div></div>
+        <div class="stat-box"><div class="value" style="color:var(--accent)">7-13°C</div><div class="label">Kühl & Sonnig</div></div>
+        <div class="stat-box"><div class="value" style="color:var(--accent)">5 Tage</div><div class="label">10 Teams</div></div>
+      </div>
+      <div class="fastest-lap" style="background:linear-gradient(135deg,rgba(225,6,0,0.15),rgba(225,6,0,0.03));border:1px solid rgba(225,6,0,0.3);">
+        <div class="fl-label" style="color:var(--accent)">⚡ SCHNELLSTE RUNDE</div>
+        <div class="fl-driver">Lewis Hamilton</div>
+        <div class="fl-detail">Ferrari SF-26 — <span style="color:#E8002D;font-weight:700;font-family:'Orbitron',sans-serif;">1:16.348</span> (30. Jan)</div>
+      </div>
+      <div class="key-fact">🏎️ <strong style="color:#52E252">Audi</strong> war das erste Team auf der Strecke!</div>
+      <div class="key-fact">❌ <strong style="color:#1868DB">Williams</strong> verpasste den gesamten Shakedown</div>
+      <div class="key-fact">⏰ <strong style="color:#229971">Aston Martin</strong> kam spät — Neweys AMR26 sorgte für Aufsehen</div>
+      <div class="key-fact">✅ <strong style="color:#27F4D2">Mercedes</strong> hatte einen extrem glatten Ablauf</div>
+      <div class="key-fact">💪 <strong style="color:#3671C6">Red Bull Ford</strong> Antrieb lief von der ersten Runde an zuverlässig</div>
+      <div class="key-fact">🔥 <strong style="color:#E8002D">Ferrari</strong> — Hamilton fuhr die schnellste Runde am letzten Tag</div>
+    </div>
+
+      <div class="next-test-banner">
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.7rem;color:var(--accent);letter-spacing:3px;margin-bottom:6px;">NÄCHSTER TEST</div>
+        <div style="font-size:1.15rem;font-weight:700;">🇧🇭 Bahrain Test 2</div>
+        <div style="color:var(--text-dim);font-size:0.85rem;margin-top:4px;">18.-20. Februar 2026 — Letzter Test vor Melbourne! 🏁</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="teams-section-title">🏎️ Teams & Drivers 2026</div>
+  <div id="teamsGrid" class="teams-grid"></div>
+
+  <footer>
+    Built by Matteo Krenn 🏎️ — Powered by <a href="#">F1 Hub</a><br>
+    <span style="margin-top:6px;display:inline-block;">Formula 1 and all related marks are trademarks of Formula One Licensing BV</span>
+  </footer>
+</div>
+
+<script>
+const teams = [
+  {
+    id: 'red-bull', name: 'Red Bull', fullName: 'Oracle Red Bull Racing', color: '#1E41FF', colorRgb: '30,65,255',
+    abbr: 'RBR', base: 'Milton Keynes, UK', chief: 'Christian Horner', engine: 'Red Bull Ford',
+    drivers: [
+      { name: 'Max Verstappen', number: 1, country: '🇳🇱 Niederlande' },
+      { name: 'Isack Hadjar', number: 6, country: '🇫🇷 Frankreich' }
+    ],
+    stats: { wins: 121, poles: 104, wcc: 6, wdc: 7 },
+    history: {
+      founded: '2005 (als Red Bull Racing)',
+      founder: 'Dietrich Mateschitz / Red Bull GmbH',
+      origin: 'Red Bull kaufte 2004 das insolvente Jaguar Racing Team (vorher Stewart Grand Prix, gegründet von Jackie Stewart 1997). Aus dem britischen Rennstall wurde über Nacht ein Red-Bull-blauer Traum.',
+      logo: 'Das ikonische Logo zeigt zwei rote Stiere, die aufeinander zustürmen — das weltbekannte Red Bull Markenzeichen. In der F1 wird es mit einem dunkelblauen Hintergrund und gelber Sonne kombiniert.',
+      milestones: [
+        '2005: Erster Sieg unter David Coulthard (nicht wirklich — erster Sieg kam 2009!)',
+        '2009: Erster Sieg in China durch Sebastian Vettel',
+        '2010-2013: VIER WM-Titel in Folge mit Sebastian Vettel — absolute Dominanz!',
+        '2021: Legendärer Titelkampf Hamilton vs Verstappen — Max wird Champion in Abu Dhabi',
+        '2022: Verstappen dominiert mit 15 Siegen',
+        '2023: Perfekte Saison — 21 von 22 Rennen gewonnen, Rekord für die Ewigkeit!',
+        '2024-2025: McLaren und Ferrari holen auf, aber Max bleibt Weltmeister'
+      ],
+      legends: 'Sebastian Vettel (4x WM), Max Verstappen (4x WM), Daniel Ricciardo, Mark Webber, David Coulthard',
+      predecessor: 'Stewart Grand Prix (1997-1999) → Jaguar Racing (2000-2004) → Red Bull Racing (2005-heute)',
+      statsText: '121+ Siege, 104+ Poles, 6 Konstrukteurs-WM, 7 Fahrer-WM (Vettel 4, Verstappen 4)'
+    },
+    present: {
+      drivers: 'Max Verstappen (#1) & Isack Hadjar (#6, Rookie)',
+      chief: 'Christian Horner (seit 2005)',
+      engine: 'Red Bull Ford — Brandneue Power Unit! Ford als Partner für die 2026-Ära.',
+      testing: 'Barcelona: Zuverlässig von Runde 1. Bahrain: ~335 Runden, Red Bull Ford PU hat ALLE beeindruckt — 1 Sekunde schneller auf den Geraden! Russell: "Ziemlich beängstigend."',
+      outlook: '🔥 Top-Favorit für 2026! Der Red Bull Ford Motor ist das Gesprächsthema Nr. 1 im Paddock. Verstappen + neuer Motor = gefährlich. Hadjar als Rookie muss sich beweisen.'
+    }
+  },
+  {
+    id: 'ferrari', name: 'Ferrari', fullName: 'Scuderia Ferrari HP', color: '#DC0000', colorRgb: '220,0,0',
+    abbr: 'FER', base: 'Maranello, Italien', chief: 'Frédéric Vasseur', engine: 'Ferrari',
+    drivers: [
+      { name: 'Charles Leclerc', number: 16, country: '🇲🇨 Monaco' },
+      { name: 'Lewis Hamilton', number: 44, country: '🇬🇧 Großbritannien' }
+    ],
+    stats: { wins: 245, poles: 249, wcc: 16, wdc: 15 },
+    history: {
+      founded: '1950 (in der F1 seit dem allerersten Rennen!)',
+      founder: 'Enzo Ferrari',
+      origin: 'Enzo Ferrari gründete die Scuderia Ferrari schon 1929 als Rennteam für Alfa Romeo. 1947 baute er sein erstes eigenes Auto, und seit 1950 ist Ferrari in JEDEM F1-Rennen dabei — das einzige Team, das nie gefehlt hat!',
+      logo: 'Das Cavallino Rampante (springendes Pferd) — eines der berühmtesten Logos der Welt! Enzo Ferrari übernahm es von einem italienischen Kampfpiloten im Ersten Weltkrieg. Der gelbe Hintergrund steht für Modena, Enzos Heimatstadt.',
+      milestones: [
+        '1952-1953: Erste WM-Titel mit Alberto Ascari',
+        '1975-1979: Niki Lauda Ära — 2 WM-Titel trotz schwerem Unfall 1976',
+        '2000-2004: Die goldene Ära! Michael Schumacher gewinnt 5 Titel in Folge — LEGENDE!',
+        '2007-2008: Kimi Räikkönen wird letzter Ferrari-Fahrerweltmeister (vor Hamilton 2025?)',
+        '2019: Leclerc-Ära beginnt',
+        '2024: Hamilton wechselt von Mercedes zu Ferrari — Mega-Transfer!'
+      ],
+      legends: 'Michael Schumacher (5x WM), Niki Lauda (2x), Juan Manuel Fangio, Alberto Ascari, Kimi Räikkönen, Gilles Villeneuve, Charles Leclerc',
+      predecessor: 'Kein Vorgänger — Ferrari IST die Formel 1. Seit Tag 1 dabei!',
+      statsText: '245+ Siege (REKORD!), 249+ Poles (REKORD!), 16 Konstrukteurs-WM (REKORD!), 15 Fahrer-WM'
+    },
+    present: {
+      drivers: 'Charles Leclerc (#16) & Lewis Hamilton (#44) — Dream Team!',
+      chief: 'Frédéric Vasseur',
+      engine: 'Ferrari — Eigener Motor, eigene Power Unit',
+      testing: 'Barcelona: Hamilton fuhr die schnellste Runde (1:16.348) am letzten Tag! Spec-A Auto. Bahrain: 420 Runden (3.), Hamilton fuhr 150 Runden an Tag 3. Vasseur redet nur über Datensammlung.',
+      outlook: '🏎️ Ferrari versteckt sich! Vasseur sagt nichts über Performance. Leclerc sieht Red Bull & Mercedes vorne. Großes Upgrade kommt zum nächsten Test. Hamilton + Leclerc ist das gefährlichste Duo im Grid!'
+    }
+  },
+  {
+    id: 'mercedes', name: 'Mercedes', fullName: 'Mercedes-AMG PETRONAS F1', color: '#00D2BE', colorRgb: '0,210,190',
+    abbr: 'MER', base: 'Brackley, UK', chief: 'Toto Wolff', engine: 'Mercedes',
+    drivers: [
+      { name: 'George Russell', number: 63, country: '🇬🇧 Großbritannien' },
+      { name: 'Kimi Antonelli', number: 12, country: '🇮🇹 Italien' }
+    ],
+    stats: { wins: 125, poles: 136, wcc: 8, wdc: 7 },
+    history: {
+      founded: '2010 (als Mercedes-Werksteam)',
+      founder: 'Daimler AG / Mercedes-Benz',
+      origin: 'Mercedes kaufte 2009 das legendäre Brawn GP Team (das 2009 sensationell die WM gewann!). Davor war es Honda Racing, BAR und Tyrrell. Mercedes war schon in den 1950ern in der F1 — mit Fangio und den Silberpfeilen!',
+      logo: 'Der berühmte Mercedes-Stern — drei Zacken für Land, Wasser und Luft. In der F1 wird das Team durch die charakteristische Petronas-Türkisfarbe erkannt.',
+      milestones: [
+        '2014-2020: 7 Konstrukteurs-WM IN FOLGE — die längste Dominanz der F1-Geschichte!',
+        '2014-2020: Lewis Hamilton gewinnt 6 seiner 7 WM-Titel mit Mercedes',
+        '2016: Nico Rosberg wird WM und tritt sofort zurück — legendär!',
+        '2021: Verliert den Titel dramatisch an Verstappen in Abu Dhabi',
+        '2022-2024: Schwierige Jahre mit dem Ground-Effect-Auto',
+        '2025: Hamilton verlässt das Team nach 12 Jahren'
+      ],
+      legends: 'Lewis Hamilton (6x WM mit Mercedes), Nico Rosberg (1x WM), Valtteri Bottas, Juan Manuel Fangio (1954-55), Stirling Moss',
+      predecessor: 'Tyrrell (1968-1998) → BAR (1999-2005) → Honda (2006-2008) → Brawn GP (2009) → Mercedes (2010-heute)',
+      statsText: '125+ Siege, 136+ Poles, 8 Konstrukteurs-WM (Rekord in Folge!), 7 Fahrer-WM'
+    },
+    present: {
+      drivers: 'George Russell (#63) & Kimi Antonelli (#12, Rookie — erst 19 Jahre alt!)',
+      chief: 'Toto Wolff',
+      engine: 'Mercedes — Eigener Motor, beliefert auch McLaren, Williams, Alpine',
+      testing: 'Barcelona: Extrem glatter Ablauf — "alle Boxen abgehakt". Bahrain: ~300 Runden, Antonelli fuhr die SCHNELLSTE Runde des gesamten Tests (1:33.669) an Tag 3!',
+      outlook: '⭐ Mercedes sieht stark aus! Antonelli ist das größte Talent seit Hamilton. Nur 33 Runden in 2 Tagen wegen Problemen, dann schnellste Runde — mental extrem stark! Russell als erfahrener Teamleader.'
+    }
+  },
+  {
+    id: 'mclaren', name: 'McLaren', fullName: 'McLaren Formula 1 Team', color: '#FF8700', colorRgb: '255,135,0',
+    abbr: 'MCL', base: 'Woking, UK', chief: 'Andrea Stella', engine: 'Mercedes',
+    drivers: [
+      { name: 'Lando Norris', number: 4, country: '🇬🇧 Großbritannien' },
+      { name: 'Oscar Piastri', number: 81, country: '🇦🇺 Australien' }
+    ],
+    stats: { wins: 188, poles: 159, wcc: 8, wdc: 12 },
+    history: {
+      founded: '1966',
+      founder: 'Bruce McLaren (Neuseeland)',
+      origin: 'Bruce McLaren, ein brillanter Rennfahrer und Ingenieur aus Neuseeland, gründete das Team 1963. Tragischerweise starb er 1970 bei einem Testunfall — aber sein Team lebte weiter und wurde zur Legende.',
+      logo: 'Das McLaren Speedmark — ein stilisiertes, geschwungenes Design. Wurde über die Jahre mehrfach modernisiert. Die Papaya-Orange Farbe (seit 2017 zurück) ist eine Hommage an Bruce McLarens Originalfarbe!',
+      milestones: [
+        '1974: Erster WM-Titel mit Emerson Fittipaldi',
+        '1984: Legendäre Saison — Lauda vs. Prost, Lauda gewinnt mit 0,5 Punkten Vorsprung!',
+        '1988: BESTE SAISON ALLER ZEITEN — Senna & Prost gewinnen 15 von 16 Rennen!',
+        '1998-1999: Mika Häkkinen wird zweimal Weltmeister',
+        '2008: Lewis Hamilton wird jüngster Weltmeister (damals!) mit McLaren',
+        '2024: Erster Konstrukteurs-Titel seit 1998! Norris & Piastri dominieren!'
+      ],
+      legends: 'Ayrton Senna (3x WM), Alain Prost (2x WM bei McLaren), Mika Häkkinen (2x WM), Lewis Hamilton, James Hunt, Niki Lauda, Lando Norris',
+      predecessor: 'Kein Vorgänger — McLaren seit 1966',
+      statsText: '188+ Siege, 159+ Poles, 8 Konstrukteurs-WM, 12 Fahrer-WM'
+    },
+    present: {
+      drivers: 'Lando Norris (#4) & Oscar Piastri (#81)',
+      chief: 'Andrea Stella',
+      engine: 'Mercedes Power Unit',
+      testing: 'Barcelona: Solider Lauf. Bahrain: 422 Runden (geteilt Platz 1 mit Williams!). Piastri fuhr über 150 Runden an Tag 3 — absolute Maschine!',
+      outlook: '🏆 Titelverteidiger! McLaren hat 2024 den Konstrukteurs-Titel gewonnen und will mehr. Norris will seinen ersten Fahrer-WM, Piastri ist bereit für den nächsten Schritt. Mega Duo!'
+    }
+  },
+  {
+    id: 'aston-martin', name: 'Aston Martin', fullName: 'Aston Martin Aramco F1', color: '#006F62', colorRgb: '0,111,98',
+    abbr: 'AMR', base: 'Silverstone, UK', chief: 'Andy Cowell', engine: 'Mercedes',
+    drivers: [
+      { name: 'Fernando Alonso', number: 14, country: '🇪🇸 Spanien' },
+      { name: 'Lance Stroll', number: 18, country: '🇨🇦 Kanada' }
+    ],
+    stats: { wins: 1, poles: 1, wcc: 0, wdc: 0 },
+    history: {
+      founded: '2021 (als Aston Martin), Team seit 1991',
+      founder: 'Lawrence Stroll (Besitzer seit 2018)',
+      origin: 'Das Team hat eine der längsten Geschichten der F1! Gegründet als Jordan Grand Prix 1991 von Eddie Jordan. Wurde mehrfach verkauft: Midland, Spyker, Force India, Racing Point — und seit 2021 Aston Martin.',
+      logo: 'Das klassische Aston Martin Flügel-Logo — eines der schönsten in der Autobranche. Die britische Luxusmarke bringt Eleganz in die F1. Das berühmte British Racing Green ist die Teamfarbe.',
+      milestones: [
+        '1991: Debüt als Jordan — spektakulärer Michael Schumachers erster F1-Auftritt!',
+        '1998: Damon Hill gewinnt den Belgien GP für Jordan — legendärer 1-2!',
+        '2009: Force India punktet regelmäßig trotz kleinem Budget',
+        '2020: Racing Point baut quasi eine Kopie des Mercedes — "Rosa Mercedes"!',
+        '2021: Umbenennung zu Aston Martin, Sebastian Vettel kommt',
+        '2023: Alonso holt 8 Podiums — bestes Jahr seit dem Rebranding!',
+        '2025: Adrian Newey (Genie-Designer!) kommt an Bord'
+      ],
+      legends: 'Fernando Alonso, Sebastian Vettel, Sergio Perez, Nico Hülkenberg, Giancarlo Fisichella, Eddie Jordan',
+      predecessor: 'Jordan (1991-2005) → Midland (2006) → Spyker (2007) → Force India (2008-2018) → Racing Point (2019-2020) → Aston Martin (2021-heute)',
+      statsText: '1 Sieg (Perez, Sakhir 2020 als Racing Point), 1 Pole, 0 WM-Titel'
+    },
+    present: {
+      drivers: 'Fernando Alonso (#14, 44 Jahre alt — LEGENDE!) & Lance Stroll (#18)',
+      chief: 'Andy Cowell (neu 2025, ex-Mercedes Motor-Chef)',
+      engine: 'Mercedes Power Unit',
+      testing: 'Barcelona: Kam spät an, Neweys AMR26 sorgte für Aufsehen. Bahrain: NUR 206 RUNDEN — wenigste aller 11 Teams! Alonso unter 100 Runden. Stroll: "4,5 Sekunden hinten".',
+      outlook: '😰 Sorgen bei Aston Martin! Trotz Adrian Newey und einer neuen Mega-Fabrik läuft es nicht. Wenigste Testrunden aller Teams. Aber: Newey-Autos werden im Saisonverlauf besser — nie abschreiben!'
+    }
+  },
+  {
+    id: 'alpine', name: 'Alpine', fullName: 'BWT Alpine F1 Team', color: '#0090FF', colorRgb: '0,144,255',
+    abbr: 'ALP', base: 'Enstone, UK', chief: 'Oliver Oakes', engine: 'Mercedes',
+    drivers: [
+      { name: 'Pierre Gasly', number: 10, country: '🇫🇷 Frankreich' },
+      { name: 'Franco Colapinto', number: 43, country: '🇦🇷 Argentinien' }
+    ],
+    stats: { wins: 36, poles: 33, wcc: 2, wdc: 2 },
+    history: {
+      founded: '1981 (als Toleman), Alpine seit 2021',
+      founder: 'Ted Toleman (Original), Renault/Alpine',
+      origin: 'Das Team startete 1981 als Toleman, wo Ayrton Senna seine Karriere begann! Wurde 1986 zu Benetton (mit Flavio Briatore und Michael Schumacher), dann 2002 von Renault gekauft. 2012-2015 als Lotus, dann wieder Renault, und seit 2021 Alpine.',
+      logo: 'Das Alpine A-Logo — stilisiert und modern. Alpine ist Renaults Sportwagenmarke, benannt nach den französischen Alpen. Die pinke BWT-Farbe gemischt mit Blau ergibt einen einzigartigen Look.',
+      milestones: [
+        '1986-2001: Als Benetton — Michael Schumacher gewinnt 1994 & 1995 zwei WM-Titel!',
+        '1994: Schumi vs. Hill — kontroverse Entscheidung in Adelaide',
+        '2005-2006: Fernando Alonso wird zweimal Weltmeister mit Renault!',
+        '2005: Alonso besiegt Schumi und wird jüngster Weltmeister (damals)',
+        '2021: Ocon gewinnt sensationell in Ungarn für Alpine!',
+        '2026: Wechsel von eigenem Renault-Motor zu Mercedes — Revolution!'
+      ],
+      legends: 'Michael Schumacher (2x WM als Benetton), Fernando Alonso (2x WM als Renault), Ayrton Senna (Debüt bei Toleman), Kimi Räikkönen (bei Lotus)',
+      predecessor: 'Toleman (1981-85) → Benetton (1986-2001) → Renault (2002-2011) → Lotus (2012-2015) → Renault (2016-2020) → Alpine (2021-heute)',
+      statsText: '36+ Siege, 33+ Poles, 2 Konstrukteurs-WM, 2 Fahrer-WM'
+    },
+    present: {
+      drivers: 'Pierre Gasly (#10) & Franco Colapinto (#43, Rookie aus Argentinien!)',
+      chief: 'Oliver Oakes (jüngster Teamchef der F1!)',
+      engine: 'Mercedes Power Unit — NEU! Wechsel von eigenem Renault-Motor zu Mercedes für 2026.',
+      testing: 'Barcelona: Solider Lauf. Bahrain: ~290 Runden, erster Test überhaupt mit dem Mercedes-Motor. Eingewöhnungsphase.',
+      outlook: '🔄 Übergangszeit! Der Mercedes-Motorwechsel ist riesig. Kurzfristig Anpassungsprobleme, aber langfristig ein viel besserer Motor. Colapinto bringt argentinisches Feuer!'
+    }
+  },
+  {
+    id: 'williams', name: 'Williams', fullName: 'Williams Racing', color: '#005AFF', colorRgb: '0,90,255',
+    abbr: 'WIL', base: 'Grove, UK', chief: 'James Vowles', engine: 'Mercedes',
+    drivers: [
+      { name: 'Carlos Sainz', number: 55, country: '🇪🇸 Spanien' },
+      { name: 'Alex Albon', number: 23, country: '🇹🇭 Thailand' }
+    ],
+    stats: { wins: 114, poles: 128, wcc: 9, wdc: 7 },
+    history: {
+      founded: '1977',
+      founder: 'Sir Frank Williams & Patrick Head',
+      origin: 'Sir Frank Williams, ein besessener Rennfan, gründete sein Team 1977 praktisch aus dem Nichts. Mit Genie-Designer Patrick Head baute er Williams zum dominantesten Team der 80er und 90er Jahre!',
+      logo: 'Das Williams-Logo war jahrelang ein einfacher Schriftzug. Seit dem Kauf durch Dorilton Capital 2020 wurde es modernisiert. Die blaue Farbe ist seit den 80ern mit Williams verbunden.',
+      milestones: [
+        '1980: Erster WM-Titel mit Alan Jones',
+        '1986-1987: Dominanz mit Piquet und Mansell — legendäre Teamkollegen-Rivalität!',
+        '1992: Nigel Mansell dominiert mit dem FW14B — eines der besten F1-Autos aller Zeiten!',
+        '1993: Alain Prost wird Weltmeister mit Williams',
+        '1994: Tragödie — Ayrton Senna stirbt in Imola im Williams 😢',
+        '1996-1997: Damon Hill und Jacques Villeneuve werden Weltmeister',
+        '2020: Dorilton Capital kauft das Team — neue Ära beginnt'
+      ],
+      legends: 'Ayrton Senna, Nigel Mansell, Alain Prost, Damon Hill, Jacques Villeneuve, Nelson Piquet, Alan Jones, Juan Pablo Montoya',
+      predecessor: 'Kein direkter Vorgänger — Williams seit 1977',
+      statsText: '114+ Siege, 128+ Poles, 9 Konstrukteurs-WM, 7 Fahrer-WM'
+    },
+    present: {
+      drivers: 'Carlos Sainz (#55, von Ferrari kommend) & Alex Albon (#23)',
+      chief: 'James Vowles (ex-Mercedes Strategie-Chef)',
+      engine: 'Mercedes Power Unit',
+      testing: 'Barcelona: VERPASST! Produktionsverzögerungen — das Auto war nicht fertig! 😱 Bahrain: MEGA COMEBACK — 422 Runden, MEISTE aller Teams! Sainz & Albon holten alles auf.',
+      outlook: '💪 Williams überrascht! Trotz des Barcelona-Desasters zeigten sie in Bahrain die meisten Runden. Sainz bringt Winner-Mentalität von Ferrari mit. James Vowles baut das Team systematisch um.'
+    }
+  },
+  {
+    id: 'racing-bulls', name: 'Racing Bulls', fullName: 'Racing Bulls F1 Team', color: '#2B4562', colorRgb: '43,69,98',
+    abbr: 'RCB', base: 'Faenza, Italien', chief: 'Laurent Mekies', engine: 'Red Bull Ford',
+    drivers: [
+      { name: 'Liam Lawson', number: 30, country: '🇳🇿 Neuseeland' },
+      { name: 'Arvid Lindblad', number: 0, country: '🇬🇧 Großbritannien' }
+    ],
+    stats: { wins: 2, poles: 1, wcc: 0, wdc: 0 },
+    history: {
+      founded: '2006 (als Toro Rosso)',
+      founder: 'Red Bull GmbH / Dietrich Mateschitz',
+      origin: 'Red Bull kaufte 2005 das Minardi-Team — das kleinste und liebenswerteste Team der F1! Umbenannt in Scuderia Toro Rosso (italienisch für Red Bull). 2024 Umbenennung zu Racing Bulls. Dient als Ausbildungsteam für junge Red-Bull-Fahrer.',
+      logo: 'Der einzelne Stier — ähnlich wie Red Bull, aber in einer eigenständigen Variante. Als Racing Bulls wurde das Logo 2024 modernisiert.',
+      milestones: [
+        '2008: SENSATION! Sebastian Vettel gewinnt in Monza — mit 21 Jahren jüngster GP-Sieger aller Zeiten (damals)!',
+        '2020: Pierre Gasly gewinnt sensationell in Monza — AlphaTauri-Triumph!',
+        '2024: Umbenennung von AlphaTauri zu Racing Bulls',
+        'Absolventen: Vettel, Verstappen, Ricciardo, Gasly, Sainz, Leclerc (kurz), Albon'
+      ],
+      legends: 'Sebastian Vettel (Debüt hier), Max Verstappen (Debüt hier), Daniel Ricciardo, Pierre Gasly, Carlos Sainz Jr.',
+      predecessor: 'Minardi (1985-2005) → Toro Rosso (2006-2019) → AlphaTauri (2020-2023) → Racing Bulls (2024-heute)',
+      statsText: '2 Siege, 1 Pole, 0 WM-Titel — aber unzählige Stars ausgebildet!'
+    },
+    present: {
+      drivers: 'Liam Lawson (#30) & Arvid Lindblad (Rookie — erst 17!)',
+      chief: 'Laurent Mekies',
+      engine: 'Red Bull Ford — Gleicher neuer Motor wie das Red Bull Hauptteam!',
+      testing: 'Barcelona: Zuverlässig. Bahrain: ~335 Runden, zusammen mit Red Bull insgesamt 670 Runden — der Red Bull Ford Motor ist ein Biest!',
+      outlook: '📈 Profitieren massiv vom Red Bull Ford Motor! Lawson muss liefern, Lindblad ist das neueste Wunderkind aus dem Red Bull Junior Team.'
+    }
+  },
+  {
+    id: 'haas', name: 'Haas', fullName: 'MoneyGram Haas F1 Team', color: '#B6BABD', colorRgb: '182,186,189',
+    abbr: 'HAA', base: 'Kannapolis, USA', chief: 'Ayao Komatsu', engine: 'Ferrari',
+    drivers: [
+      { name: 'Esteban Ocon', number: 31, country: '🇫🇷 Frankreich' },
+      { name: 'Oliver Bearman', number: 87, country: '🇬🇧 Großbritannien' }
+    ],
+    stats: { wins: 0, poles: 1, wcc: 0, wdc: 0 },
+    history: {
+      founded: '2016',
+      founder: 'Gene Haas (amerikanischer Unternehmer)',
+      origin: 'Gene Haas, Gründer von Haas Automation (CNC-Maschinen), wollte ein amerikanisches F1-Team gründen. Partnerschaft mit Ferrari für Motor und Teile. Einziges aktuelles US-Besitz-Team (neben Cadillac)!',
+      logo: 'Das Haas-Logo ist schlicht und industriell — passend zum Maschinenbau-Hintergrund von Gene Haas. Grau/Silber als Teamfarbe mit wechselnden Sponsorfarben.',
+      milestones: [
+        '2016: Debütsaison — Romain Grosjean holt gleich im ersten Rennen Punkte! Bestes Debüt seit Jahren.',
+        '2018: Bestes Ergebnis — P5 in der Konstrukteurs-WM!',
+        '2022: Kevin Magnussen holt eine sensationelle Pole Position in São Paulo im Regen!',
+        '2024: Nico Hülkenberg holt regelmäßig Punkte',
+        '2025: Toyota wird technischer Partner — riesiger Boost!'
+      ],
+      legends: 'Romain Grosjean, Kevin Magnussen, Nico Hülkenberg, Mick Schumacher, Oliver Bearman',
+      predecessor: 'Kein Vorgänger — Haas ist ein komplett neues Team seit 2016',
+      statsText: '0 Siege, 1 Pole (Magnussen, Interlagos 2022), 0 WM-Titel'
+    },
+    present: {
+      drivers: 'Esteban Ocon (#31, von Alpine) & Oliver Bearman (#87, Ferrari-Junior)',
+      chief: 'Ayao Komatsu (erster japanischer Teamchef in der F1!)',
+      engine: 'Ferrari Power Unit',
+      testing: 'Barcelona: Solider Lauf. Bahrain: ~280 Runden, solide Arbeit mit der neuen Toyota-Partnerschaft.',
+      outlook: '🔧 Toyota-Partnerschaft ist ein Game-Changer! Mehr Ressourcen und Technologie. Bearman ist ein aufregender junger Fahrer (hatte 2024 ein sensationelles Ferrari-Debüt). Ocon bringt Erfahrung.'
+    }
+  },
+  {
+    id: 'cadillac', name: 'Cadillac', fullName: 'Cadillac Formula 1 Team', color: '#CFB53B', colorRgb: '207,181,59',
+    abbr: 'CAD', base: 'Fishers, Indiana, USA', chief: 'Graeme Lowdon', engine: 'Ferrari',
+    drivers: [
+      { name: 'Sergio Perez', number: 11, country: '🇲🇽 Mexiko' },
+      { name: 'Valtteri Bottas', number: 77, country: '🇫🇮 Finnland' }
+    ],
+    stats: { wins: 0, poles: 0, wcc: 0, wdc: 0 },
+    history: {
+      founded: '2026 (BRANDNEU!)',
+      founder: 'General Motors / TWG Motorsports',
+      origin: 'General Motors wollte mit seiner Luxusmarke Cadillac in die F1! Nach langen Verhandlungen wurde das 11. Team für 2026 genehmigt. Zusammen mit TWG Motorsports (Andretti-Nachfolger). Ab 2029 soll ein eigener GM-Motor kommen!',
+      logo: 'Das ikonische Cadillac-Wappen — ein Symbol amerikanischer Luxus seit 1902! Benannt nach dem französischen Entdecker Antoine de la Mothe Cadillac, der Detroit gründete.',
+      milestones: [
+        '2024: FIA genehmigt das 11. Team!',
+        '2025: Übernahme von Andretti Global durch TWG-Cadillac',
+        '2026: Erstes F1-Rennen — historisches Debüt!',
+        'Cadillac will ab 2029 einen eigenen Motor bauen',
+        'Sergio Perez und Valtteri Bottas als erfahrene Fahrer verpflichtet'
+      ],
+      legends: 'Noch keine F1-Legenden — die Geschichte wird JETZT geschrieben! Aber: Perez (Red Bull) und Bottas (Mercedes) bringen zusammen 700+ GP-Starts mit!',
+      predecessor: 'Komplett neues Team! Verbindung zu Andretti Global/TWG Motorsports. GM hatte in den 1960ern kurz IndyCar-Engagement.',
+      statsText: 'Noch 0 Siege, 0 Poles, 0 WM-Titel — alles noch vor ihnen!'
+    },
+    present: {
+      drivers: 'Sergio Perez (#11, ex-Red Bull) & Valtteri Bottas (#77, ex-Mercedes)',
+      chief: 'Graeme Lowdon (Team Principal), Dan Towriss (CEO)',
+      engine: 'Ferrari Power Unit (bis eigener GM-Motor 2029 kommt)',
+      testing: 'Barcelona: War dabei. Bahrain: ~314 Runden (Platz 6!) — richtig gut für ein Debüt-Team! Perez & Bottas fuhren Rennsimulationen.',
+      outlook: '🇺🇸 Das aufregendste Debüt seit Jahren! Cadillac hat alle überrascht. Über 1.700 km in Bahrain, das Paddock ist beeindruckt. Perez und Bottas kennen die F1 in- und auswendig — perfekte Wahl für ein neues Team!'
+    }
+  },
+  {
+    id: 'audi', name: 'Audi', fullName: 'Audi Revolut F1 Team', color: '#F50537', colorRgb: '245,5,55',
+    abbr: 'AUD', base: 'Hinwil, Schweiz', chief: 'Jonathan Wheatley', engine: 'Audi',
+    drivers: [
+      { name: 'Nico Hülkenberg', number: 27, country: '🇩🇪 Deutschland' },
+      { name: 'Gabriel Bortoleto', number: 5, country: '🇧🇷 Brasilien' }
+    ],
+    stats: { wins: 1, poles: 1, wcc: 0, wdc: 0 },
+    history: {
+      founded: '2026 (als Audi), Team seit 1993',
+      founder: 'Peter Sauber (Original), Volkswagen AG/Audi',
+      origin: 'Peter Sauber gründete 1970 sein Motorsport-Team in der Schweiz. 1993 kam Sauber in die F1. 2006-2009 wurde es BMW Sauber (Robert Kubica gewann!). 2024 kaufte Audi das Team für ihren F1-Einstieg 2026. Audis Vorgänger Auto Union fuhr schon 1935 Grand Prix!',
+      logo: 'Die vier Ringe von Audi — stehen für die vier Unternehmen der Auto Union: Audi, DKW, Horch und Wanderer. Eines der bekanntesten Auto-Logos der Welt!',
+      milestones: [
+        '1993: F1-Debüt als Sauber — JJ Lehto und Karl Wendlinger fahren',
+        '2001: Kimi Räikkönen startet seine Karriere bei Sauber!',
+        '2008: Robert Kubica gewinnt den Kanada GP für BMW Sauber — einziger Sieg!',
+        '2019-2023: Alfa Romeo Branding (Sauber-Chassis)',
+        '2024: Audi kauft das Team, Mattia Binotto (ex-Ferrari!) wird Chef',
+        '2026: Erster F1-Start als Audi mit eigenem Motor!'
+      ],
+      legends: 'Robert Kubica, Kimi Räikkönen (Debüt hier), Felipe Massa, Nico Hülkenberg, Valtteri Bottas, Charles Leclerc (Debüt hier!)',
+      predecessor: 'Sauber (1993-2005) → BMW Sauber (2006-2009) → Sauber (2010-2018) → Alfa Romeo/Sauber (2019-2023) → Kick Sauber (2024-2025) → Audi (2026-heute)',
+      statsText: '1 Sieg (Kubica, Kanada 2008), 1 Pole, 0 WM-Titel'
+    },
+    present: {
+      drivers: 'Nico Hülkenberg (#27, Deutschland) & Gabriel Bortoleto (#5, Rookie aus Brasilien, F2-Champion!)',
+      chief: 'Jonathan Wheatley (Team Principal, ex-Red Bull!), Mattia Binotto (Head of Audi F1 Project)',
+      engine: 'Audi — Komplett eigener, brandneuer Motor! Erste eigene Power Unit.',
+      testing: 'Barcelona: WAR DAS ERSTE TEAM AUF DER STRECKE — historischer Moment! Bahrain: ~310 Runden, neues Bodywork. Wheatley ist "stolz" auf den Fortschritt.',
+      outlook: '🔧 Audi hat noch einen langen Weg vor sich, aber die Zeichen sind positiv. Eigener Motor = langfristiges Projekt. Hülkenberg bringt Erfahrung, Bortoleto ist ein aufregender F2-Champion. Wheatley von Red Bull soll das Team transformieren!'
+    }
+  }
+];
+
+// Render sidebar
+function renderSidebar() {
+  const sb = document.getElementById('teamSidebar');
+  teams.forEach(t => {
+    const icon = document.createElement('div');
+    icon.className = 'team-icon';
+    icon.setAttribute('data-team', t.id);
+    icon.setAttribute('data-tooltip', t.name);
+    icon.style.setProperty('--team-color', t.color);
+    icon.style.setProperty('--team-rgb', t.colorRgb);
+    icon.style.color = t.color;
+    icon.innerHTML = t.abbr;
+    icon.onclick = () => openPanel(t.id);
+    sb.appendChild(icon);
+  });
+}
+
+// Render teams grid
+function renderTeamsGrid() {
+  const grid = document.getElementById('teamsGrid');
+  grid.innerHTML = teams.map((t, i) => `
+    <div class="team-card" onclick="openPanel('${t.id}')" style="animation:fadeIn 0.4s ease ${i*0.05}s both">
+      <div style="position:absolute;top:0;left:0;width:4px;height:100%;background:${t.color};border-radius:14px 0 0 14px"></div>
+      <div class="tc-num">${i+1}</div>
+      <div class="tc-name" style="color:${t.color}">${t.name}</div>
+      <div class="tc-full">${t.fullName}</div>
+      <div class="tc-drivers">${t.drivers.map(d=>`<span class="driver-tag">${d.name}</span>`).join('')}</div>
+    </div>
+  `).join('');
+}
+
+// Open team panel
+function openPanel(id) {
+  const team = teams.find(t => t.id === id);
+  if (!team) return;
+
+  // Highlight sidebar icon
+  document.querySelectorAll('.team-icon').forEach(el => el.classList.remove('active'));
+  const icon = document.querySelector(`.team-icon[data-team="${id}"]`);
+  if (icon) icon.classList.add('active');
+
+  const panel = document.getElementById('teamPanel');
+  panel.style.setProperty('--team-accent', team.color);
+  panel.innerHTML = `
+    <div class="panel-header">
+      <div class="panel-header-bg" style="--team-accent:${team.color}"></div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+      <div class="panel-team-name" style="color:${team.color}">${team.name}</div>
+      <div class="panel-team-full">${team.fullName} — ${team.base}</div>
+      <div class="panel-tabs">
+        <div class="panel-tab active" data-tab="past" onclick="switchTab(this,'past')" style="--team-accent:${team.color}">🕰️ Vergangenheit</div>
+        <div class="panel-tab" data-tab="now" onclick="switchTab(this,'now')" style="--team-accent:${team.color}">⚡ Gegenwart 2026</div>
+      </div>
+    </div>
+    <div class="panel-body" style="--team-accent:${team.color}">
+      <div class="tab-content active" id="tab-past">
+        <div class="stat-row">
+          <div class="mini-stat"><div class="val" style="color:${team.color}">${team.stats.wins}</div><div class="lbl">Siege</div></div>
+          <div class="mini-stat"><div class="val" style="color:${team.color}">${team.stats.poles}</div><div class="lbl">Poles</div></div>
+          <div class="mini-stat"><div class="val" style="color:${team.color}">${team.stats.wcc}</div><div class="lbl">Team-WM</div></div>
+          <div class="mini-stat"><div class="val" style="color:${team.color}">${team.stats.wdc}</div><div class="lbl">Fahrer-WM</div></div>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">🏗️ Gründung</h3>
+          <p><strong>${team.history.founded}</strong> — ${team.history.founder}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">📖 Die Geschichte</h3>
+          <p>${team.history.origin}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">🎨 Das Logo</h3>
+          <p>${team.history.logo}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">🏆 Meilensteine</h3>
+          <ul>${team.history.milestones.map(m => `<li>${m}</li>`).join('')}</ul>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">⭐ Legenden</h3>
+          <p>${team.history.legends}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">🔄 Team-Geschichte</h3>
+          <p style="font-family:'Orbitron',sans-serif;font-size:0.75rem;letter-spacing:0.5px;line-height:2;">${team.history.predecessor}</p>
+        </div>
+
+        <div class="highlight-box" style="background:${team.color}15;border:1px solid ${team.color}33;">
+          <h4 style="color:${team.color}">📊 Statistiken</h4>
+          <p style="font-size:0.85rem;color:#ccc;">${team.history.statsText}</p>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-now">
+        <div class="driver-row">
+          ${team.drivers.map(d => `
+            <div class="driver-mini">
+              <div class="num" style="color:${team.color}">#${d.number || '?'}</div>
+              <div class="dname">${d.name}</div>
+              <div class="dcountry">${d.country}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">👤 Fahrer</h3>
+          <p>${team.present.drivers}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">🎯 Teamchef</h3>
+          <p>${team.present.chief}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">⚙️ Motor / Power Unit</h3>
+          <p>${team.present.engine}</p>
+        </div>
+
+        <div class="info-block">
+          <h3 style="color:${team.color}">🏁 Pre-Season Testing</h3>
+          <p>${team.present.testing}</p>
+        </div>
+
+        <div class="highlight-box" style="background:${team.color}15;border:1px solid ${team.color}33;">
+          <h4 style="color:${team.color}">🔮 Ausblick 2026</h4>
+          <p style="font-size:0.9rem;color:#ccc;line-height:1.7;">${team.present.outlook}</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const overlay = document.getElementById('teamOverlay');
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => overlay.classList.add('open'));
+}
+
+function closePanel() {
+  const overlay = document.getElementById('teamOverlay');
+  overlay.classList.remove('open');
+  setTimeout(() => { overlay.style.display = 'none'; }, 300);
+  document.querySelectorAll('.team-icon').forEach(el => el.classList.remove('active'));
+}
+
+function switchTab(el, tab) {
+  el.parentElement.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + (tab === 'past' ? 'past' : 'now')).classList.add('active');
+}
+
+// Keyboard close
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+renderSidebar();
+renderTeamsGrid();
+</script>
+</body>
+</html>
